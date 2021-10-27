@@ -182,9 +182,9 @@ def main():
             st.error("Ви не запустили алгоритм. Поверніться на попередній крок")
         else:
             st.header('Результати роботи алгоритму')
-            title = st.text_input('Введіть назву файлу для результуючих даних та многочленів', 'results polinoms')
+            title = st.text_input('Введіть назви 2 файлів через пробіл: для результуючих матриць та многочленів. Після цього натисніть Enter', 'results polinoms')
             st.download_button(
-                    label="Вивантажити результати",
+                    label="Натисніть для вивантаження результуючих матриць",
                     data=st.session_state['buffer'],
                     file_name=f"{title.split()[0]}.xlsx",
                     mime="application/vnd.ms-excel"
@@ -193,7 +193,7 @@ def main():
             plots(st.session_state['solution'])
             
             st.download_button(
-                    label="Вивантажити многочлени",
+                    label="Натисніть для вивантаження многочленів",
                     data=st.session_state['print_result'].replace('**','').replace('\\',''),
                     file_name=f"{title.split()[1]}.txt")
             
