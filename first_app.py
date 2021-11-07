@@ -4,6 +4,7 @@ import pandas as pd
 from polynomial_builder import PolynomialBuilder
 from solve import Solve
 import time
+from tqdm import tqdm
 
 st.set_page_config(layout="wide")
 
@@ -25,15 +26,15 @@ st.markdown(hide_footer_style, unsafe_allow_html=True)
 
 def search_params(df):
     
-    st_x1s = [i for i in range(2, 10, 2)]
-    st_x2s = [i for i in range(2, 10, 2)]
-    st_x3s = [i for i in range(2, 10, 2)]
+    st_x1s = [i for i in range(2, 10)]
+    st_x2s = [i for i in range(2, 10)]
+    st_x3s = [i for i in range(2, 10)]
     opt_err = np.inf
     opt_dct = dict()
     all_results = []
     with st.spinner('Ми працюємо, зачекайте...'):
-        for st_x1 in st_x1s:
-            for st_x2 in st_x2s:
+        for st_x1 in tqdm(st_x1s):
+            for st_x2 in tqdm(st_x2s):
                 for st_x3 in st_x3s:
                     #if st_x1 + st_x2 + st_x3 > 3:
                     dct = {
@@ -44,6 +45,7 @@ def search_params(df):
                     'degrees': [st_x1, st_x2, st_x3], # stepin' polinoma
                     'weights': st.session_state['weights'], # vagi (scaled/average)
                     'lambda_multiblock': int(st.session_state['lambda_multiblock']),
+                    'is_save': False
                         }
                     solver = Solve(dct)
                     buffer, err = solver.prepare()
@@ -55,7 +57,7 @@ def search_params(df):
                     err = np.mean(np.mean(abs(y_norm - f_norm), axis=0))
                     all_results.append({"degrees": ', '.join([str(st_x1), str(st_x2), str(st_x3)]),
                                         "error": err})
-                    print(err)
+                    #print(err)
                     if err < opt_err:
                         opt_err = err
                         opt_dct = dct
@@ -162,6 +164,7 @@ def main():
                             'degrees': [st.session_state[i] for i in ['st_x1', 'st_x2', 'st_x3']], # stepin' polinoma
                             'weights': st.session_state['weights'], # vagi (scaled/average)
                             'lambda_multiblock': int(st.session_state['lambda_multiblock']),
+                            'is_save': True
                         }
                     solver = Solve(dct)
                     buffer, err = solver.prepare()
@@ -182,9 +185,9 @@ def main():
             st.error("Ви не запустили алгоритм. Поверніться на попередній крок")
         else:
             st.header('Результати роботи алгоритму')
-            title = st.text_input('Введіть назви 2 файлів через пробіл: для результуючих матриць та многочленів. Після цього натисніть Enter', 'results polinoms')
+            title = st.text_input('Введіть назву файлу для результуючих даних та многочленів', 'results polinoms')
             st.download_button(
-                    label="Натисніть для вивантаження результуючих матриць",
+                    label="Вивантажити результати",
                     data=st.session_state['buffer'],
                     file_name=f"{title.split()[0]}.xlsx",
                     mime="application/vnd.ms-excel"
@@ -193,7 +196,7 @@ def main():
             plots(st.session_state['solution'])
             
             st.download_button(
-                    label="Натисніть для вивантаження многочленів",
+                    label="Вивантажити многочлени",
                     data=st.session_state['print_result'].replace('**','').replace('\\',''),
                     file_name=f"{title.split()[1]}.txt")
             
