@@ -23,6 +23,7 @@ class Solve(object):
         self.eps = 1E-6
         self.norm_error=0.0
         self.error=0.0
+        self.save=d['is_save']
 
     def define_data(self):
         self.datas = self.filename_input[:self.n]
@@ -377,7 +378,10 @@ class Solve(object):
         self.built_c()
         self.built_F()
         self.built_F_()
-        buffer = self.save_to_file()
+        if self.save:
+            buffer = self.save_to_file()
+        else:
+            buffer = None
         return buffer, self.error
 
 def conjugate_gradient_method(A, b, eps):
