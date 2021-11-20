@@ -5,6 +5,7 @@ from polynomial_builder import PolynomialBuilder
 from solve import Solve
 import time
 from tqdm import tqdm
+import itertools
 
 st.set_page_config(layout="wide")
 
@@ -32,35 +33,39 @@ def search_params(df):
     opt_err = np.inf
     opt_dct = dict()
     all_results = []
-    with st.spinner('Ми працюємо, зачекайте...'):
-        for st_x1 in tqdm(st_x1s):
-            for st_x2 in tqdm(st_x2s):
-                for st_x3 in st_x3s:
-                    #if st_x1 + st_x2 + st_x3 > 3:
-                    dct = {
-                    'poly_type': st.session_state['method'], # 
-                    'input_file': st.session_state['df'],
-                    'samples': st.session_state['samples'],
-                    'dimensions': [st.session_state[i] for i in ['dim_x1', 'dim_x2', 'dim_x3', 'dim_y']], # rozmirnist' vectoriv (x1,x2,x3,y)
-                    'degrees': [st_x1, st_x2, st_x3], # stepin' polinoma
-                    'weights': st.session_state['weights'], # vagi (scaled/average)
-                    'lambda_multiblock': int(st.session_state['lambda_multiblock']),
-                    'is_save': False
-                        }
-                    solver = Solve(dct)
-                    buffer, err = solver.prepare()
-                    solution = PolynomialBuilder(solver)
-                    y = np.array(solution._solution.Y_)
-                    f = np.array(solution._solution.F_)
-                    y_norm = y / np.max(y)
-                    f_norm = f / np.max(f)
-                    err = np.mean(np.mean(abs(y_norm - f_norm), axis=0))
-                    all_results.append({"degrees": ', '.join([str(st_x1), str(st_x2), str(st_x3)]),
-                                        "error": err})
-                    #print(err)
-                    if err < opt_err:
-                        opt_err = err
-                        opt_dct = dct
+    my_bar = st.progress(0)
+    combinations = [st_x1s, st_x2s, st_x3s]
+    combinations = list(itertools.product(*combinations))
+    b = 1 / (len(combinations) - 1)
+    print(b)
+    for percent_complete, comb in tqdm(enumerate(combinations)):
+        st_x1, st_x2, st_x3 = comb
+        #if st_x1 + st_x2 + st_x3 > 3:
+        dct = {
+        'poly_type': st.session_state['method'], # 
+        'input_file': st.session_state['df'],
+        'samples': st.session_state['samples'],
+        'dimensions': [st.session_state[i] for i in ['dim_x1', 'dim_x2', 'dim_x3', 'dim_y']], # rozmirnist' vectoriv (x1,x2,x3,y)
+        'degrees': [st_x1, st_x2, st_x3], # stepin' polinoma
+        'weights': st.session_state['weights'], # vagi (scaled/average)
+        'lambda_multiblock': int(st.session_state['lambda_multiblock']),
+        'is_save': False
+            }
+        solver = Solve(dct)
+        buffer, err = solver.prepare()
+        solution = PolynomialBuilder(solver)
+        y = np.array(solution._solution.Y_)
+        f = np.array(solution._solution.F_)
+        y_norm = y / np.max(y)
+        f_norm = f / np.max(f)
+        err = np.mean(np.mean(abs(y_norm - f_norm), axis=0))
+        all_results.append({"degrees": ', '.join([str(st_x1), str(st_x2), str(st_x3)]),
+                            "error": err})
+        #print(err)
+        if err < opt_err:
+            opt_err = err
+            opt_dct = dct
+        my_bar.progress(b*percent_complete)
                         
     st.success('Все готово! 10 найкращих ітерацій виведено нижче')
     st.dataframe(pd.DataFrame(all_results).sort_values(by='error').iloc[:10])
