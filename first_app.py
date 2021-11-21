@@ -56,9 +56,9 @@ def search_params(df):
         solution = PolynomialBuilder(solver)
         y = np.array(solution._solution.Y_)
         f = np.array(solution._solution.F_)
-        y_norm = y / np.max(y)
-        f_norm = f / np.max(f)
-        err = np.mean(np.mean(abs(y_norm - f_norm), axis=0))
+        y_norm = (y - np.min(y, 0)) / (np.max(y, 0) - np.min(y, 0))
+        f_norm = (f - np.min(f, 0)) / (np.max(f, 0) - np.min(f, 0))
+        err = np.mean(np.mean(abs(y_norm - f_norm), axis=1))
         all_results.append({"degrees": ', '.join([str(st_x1), str(st_x2), str(st_x3)]),
                             "error": err})
         #print(err)
@@ -127,8 +127,8 @@ def plots(solution):
             col.subheader(f'Координата Y{i+1}')
             y = np.array(solution._solution.Y_[:, i]).reshape(-1,)
             f = np.array(solution._solution.F_[:, i]).reshape(-1,)
-            y_norm = y / max(y)
-            f_norm = f / max(f)
+            y_norm = (y - min(y)) / (max(y) - min(y))
+            f_norm = (f - min(f)) / (max(f) - min(f))
             err = abs(y_norm - f_norm)
             col.line_chart({"Y": y,
                            "F": f})
